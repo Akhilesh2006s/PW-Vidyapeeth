@@ -183,7 +183,7 @@ export function SessionPage() {
   if (!bundle) return <Page title={t('sessions.workspace')}><div className="banner danger">{error}</div></Page>;
 
   const session = bundle.session;
-  const active = panel || 'record';
+  const active = panel || (session.status === 'completed' ? 'analysis' : 'record');
   const steps: Array<{ key: MessageKey; on: boolean; bad?: boolean }> = [
     { key: 'pipeline.record', on: true },
     { key: 'pipeline.upload', on: session.status !== 'in_progress' },
@@ -304,9 +304,7 @@ export function SessionPage() {
             </section>
           ) : null}
           {!playback && session.status !== 'processing' ? <VoiceRecorder disabled={phase !== 'idle'} submitting={phase === 'uploading'} onSubmit={submit} /> : null}
-          {playback || bundle.transcript ? <TranscriptView transcript={bundle.transcript} /> : null}
-          {bundle.analysis ? <AnalysisView analysis={bundle.analysis} session={session} /> : null}
-          {session.status !== 'processing' ? (
+          {!bundle.transcript && session.status !== 'processing' ? (
             <form className="card stack" onSubmit={submitText}>
               <h2>{t('text.heading')}</h2>
               <p className="muted">{t('text.hint')}</p>
@@ -331,6 +329,7 @@ export function SessionPage() {
               </div>
             </form>
           ) : null}
+          {bundle.transcript ? <TranscriptView transcript={bundle.transcript} /> : null}
         </div>
       ) : null}
       {active === 'transcript' ? <TranscriptView transcript={bundle.transcript} /> : null}

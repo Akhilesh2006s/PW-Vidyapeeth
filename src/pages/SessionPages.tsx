@@ -183,7 +183,7 @@ export function SessionPage() {
   if (!bundle) return <Page title={t('sessions.workspace')}><div className="banner danger">{error}</div></Page>;
 
   const session = bundle.session;
-  const active = panel || (session.status === 'completed' ? 'analysis' : 'record');
+  const active = panel || 'record';
   const steps: Array<{ key: MessageKey; on: boolean; bad?: boolean }> = [
     { key: 'pipeline.record', on: true },
     { key: 'pipeline.upload', on: session.status !== 'in_progress' },
@@ -264,7 +264,48 @@ export function SessionPage() {
               </ol>
             </section>
           ) : null}
-          {session.status !== 'processing' ? <VoiceRecorder disabled={phase !== 'idle'} submitting={phase === 'uploading'} onSubmit={submit} /> : null}
+          {playback ? (
+            <section className="card stack">
+              <div className="row-between">
+                <strong>{formatDuration(bundle.audio?.durationSeconds || session.durationSeconds)}</strong>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  {session.status !== 'processing' ? (
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={async () => {
+                        await api(`/sessions/${id}/audio`, { method: 'DELETE' });
+                        await load();
+                      }}
+                    >
+                      {t('sessions.discard')}
+                    </button>
+                  ) : null}
+                  {session.status !== 'processing' ? (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setPhase('processing');
+                        try {
+                          await api(`/sessions/${id}/process`, { method: 'POST' });
+                          await load();
+                        } catch (err) {
+                          setPhase('idle');
+                          setError(messageOf(err));
+                        }
+                      }}
+                    >
+                      {session.status === 'completed' ? t('sessions.reprocess') : t('recorder.submit')}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              <audio controls src={playback} />
+            </section>
+          ) : null}
+          {!playback && session.status !== 'processing' ? <VoiceRecorder disabled={phase !== 'idle'} submitting={phase === 'uploading'} onSubmit={submit} /> : null}
+          {playback || bundle.transcript ? <TranscriptView transcript={bundle.transcript} /> : null}
+          {bundle.analysis ? <AnalysisView analysis={bundle.analysis} session={session} /> : null}
           {session.status !== 'processing' ? (
             <form className="card stack" onSubmit={submitText}>
               <h2>{t('text.heading')}</h2>
@@ -289,45 +330,6 @@ export function SessionPage() {
                 </button>
               </div>
             </form>
-          ) : null}
-          {playback ? (
-            <section className="card stack">
-              <div className="row-between">
-                <strong>{formatDuration(bundle.audio?.durationSeconds || session.durationSeconds)}</strong>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  {session.status !== 'processing' ? (
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={async () => {
-                        await api(`/sessions/${id}/audio`, { method: 'DELETE' });
-                        await load();
-                      }}
-                    >
-                      {t('sessions.discard')}
-                    </button>
-                  ) : null}
-                  {session.status === 'audio_uploaded' || session.status === 'failed' || session.status === 'completed' ? (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setPhase('processing');
-                        try {
-                          await api(`/sessions/${id}/process`, { method: 'POST' });
-                          await load();
-                        } catch (err) {
-                          setPhase('idle');
-                          setError(messageOf(err));
-                        }
-                      }}
-                    >
-                      {session.status === 'completed' ? t('sessions.reprocess') : t('recorder.submit')}
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-              <audio controls src={playback} />
-            </section>
           ) : null}
         </div>
       ) : null}

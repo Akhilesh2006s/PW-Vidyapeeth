@@ -3,6 +3,7 @@ import { formatDuration } from '../format';
 import { useI18n } from '../language';
 
 type RecorderState = 'idle' | 'recording' | 'paused' | 'ready';
+const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
 function pickMime() {
   if (typeof MediaRecorder === 'undefined') return '';
@@ -17,7 +18,7 @@ export function VoiceRecorder({
 }: {
   disabled?: boolean;
   submitting?: boolean;
-  onSubmit: (blob: Blob, durationSeconds: number) => Promise<void>;
+  onSubmit: (blob: Blob, durationSeconds: number, filename: string) => Promise<void>;
 }) {
   const { t } = useI18n();
   const [state, setState] = useState<RecorderState>('idle');
@@ -32,6 +33,8 @@ export function VoiceRecorder({
   const accumulatedRef = useRef(0);
   const startedAtRef = useRef<number | null>(null);
   const blobRef = useRef<Blob | null>(null);
+  const filenameRef = useRef('counselling.webm');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const timerRef = useRef<number | null>(null);
 
   function stopTracks() {
@@ -148,6 +151,8 @@ export function VoiceRecorder({
 
   function discard() {
     blobRef.current = null;
+    filenameRef.current = 'counselling.webm';
+    if (fileInputRef.current) fileInputRef.current.value = '';
     accumulatedRef.current = 0;
     startedAtRef.current = null;
     setElapsed(0);
@@ -158,9 +163,49 @@ export function VoiceRecorder({
     setState('idle');
   }
 
+  function selectFile(file: File | undefined) {
+    setError('');
+    if (!file) return;
+    if (file.size > MAX_AUDIO_BYTES) {
+      setError(t('recorder.fileTooLarge'));
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    if (file.type && !file.type.startsWith('audio/') && file.type !== 'video/webm') {
+      setError(t('recorder.invalidFile'));
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    blobRef.current = file;
+    filenameRef.current = file.name;
+    accumulatedRef.current = 0;
+    startedAtRef.current = null;
+    setElapsed(0);
+    setAudioUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return url;
+    });
+    setState('ready');
+
+    const probe = new Audio();
+    probe.preload = 'metadata';
+    probe.onloadedmetadata = () => {
+      if (Number.isFinite(probe.duration)) {
+        const durationMs = Math.round(probe.duration * 1000);
+        accumulatedRef.current = durationMs;
+        setElapsed(durationMs);
+      }
+      probe.src = '';
+    };
+    probe.onerror = () => setError(t('recorder.invalidFile'));
+    probe.src = url;
+  }
+
   async function submit() {
     if (!blobRef.current) return;
-    await onSubmit(blobRef.current, Math.round(currentElapsed() / 1000));
+    await onSubmit(blobRef.current, Math.round(currentElapsed() / 1000), filenameRef.current);
     discard();
   }
 
@@ -188,9 +233,26 @@ export function VoiceRecorder({
       {audioUrl ? <audio controls src={audioUrl} /> : null}
       <div className="recorder-actions">
         {state === 'idle' ? (
-          <button type="button" onClick={start} disabled={disabled || submitting}>
-            {t('recorder.start')}
-          </button>
+          <>
+            <button type="button" onClick={start} disabled={disabled || submitting}>
+              {t('recorder.start')}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={disabled || submitting}
+            >
+              {t('recorder.upload')}
+            </button>
+            <input
+              ref={fileInputRef}
+              className="visually-hidden"
+              type="file"
+              accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm"
+              onChange={(event) => selectFile(event.target.files?.[0])}
+            />
+          </>
         ) : null}
         {state === 'recording' ? (
           <>
@@ -214,6 +276,11 @@ export function VoiceRecorder({
         ) : null}
         {state === 'ready' ? (
           <>
+            {filenameRef.current !== 'counselling.webm' ? (
+              <span className="selected-audio" title={filenameRef.current}>
+                {t('recorder.selected')}: {filenameRef.current}
+              </span>
+            ) : null}
             <button type="button" onClick={submit} disabled={submitting || disabled}>
               {submitting ? t('common.loading') : t('recorder.submit')}
             </button>

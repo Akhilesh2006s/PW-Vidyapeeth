@@ -224,12 +224,12 @@ export function SessionPage() {
     { key: 'pipeline.done', on: session.status === 'completed' },
   ];
 
-  async function submit(blob: Blob, durationSeconds: number) {
+  async function submit(blob: Blob, durationSeconds: number, filename: string) {
     setPhase('uploading');
     setError('');
     try {
       const form = new FormData();
-      form.append('audio', blob, 'counselling.webm');
+      form.append('audio', blob, filename || 'counselling.webm');
       form.append('durationSeconds', String(durationSeconds));
       await api(`/sessions/${id}/audio`, { method: 'POST', body: form });
       setPhase('processing');

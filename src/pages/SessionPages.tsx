@@ -7,7 +7,7 @@ import { VoiceRecorder } from '../components/VoiceRecorder';
 import { Field, Page, TranslatedBadge } from '../components/ui';
 import { formatDuration, formatWhen, messageOf, personName } from '../format';
 import { useI18n } from '../language';
-import type { CoveragePoint, FollowUp, Session, SessionBundle, SpokenLanguage } from '../types';
+import type { CoveragePoint, FollowUp, Parent, Session, SessionBundle, SpokenLanguage, Student } from '../types';
 import type { MessageKey } from '../i18n';
 import { sampleConversation } from '../sampleConversation';
 
@@ -64,13 +64,27 @@ export function NewSessionPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [students, setStudents] = useState<Student[]>([]);
+  const [parents, setParents] = useState<Parent[]>([]);
   const [form, setForm] = useState({
+    studentId: '',
+    parentId: '',
     studentName: '',
     parentName: '',
     language: 'mixed' as SpokenLanguage,
     title: '',
     notes: '',
   });
+
+  useEffect(() => {
+    Promise.all([
+      api<{ data: Student[] }>('/students'),
+      api<{ data: Parent[] }>('/parents'),
+    ]).then(([studentResponse, parentResponse]) => {
+      setStudents(studentResponse.data);
+      setParents(parentResponse.data);
+    }).catch((err) => setError(messageOf(err)));
+  }, []);
 
   return (
     <Page title={t('sessions.new')} lede={t('sessions.languageHint')}>
@@ -90,8 +104,26 @@ export function NewSessionPage() {
           }
         }}
       >
+        <Field label={t('sessions.student')}>
+          <select value={form.studentId} onChange={(event) => {
+            const student = students.find((item) => item.id === event.target.value);
+            setForm({ ...form, studentId: event.target.value, studentName: student?.fullName || form.studentName });
+          }}>
+            <option value="">{t('sessions.manualEntry')}</option>
+            {students.map((student) => <option key={student.id} value={student.id}>{student.fullName}</option>)}
+          </select>
+        </Field>
         <Field label={t('sessions.studentName')}>
           <input required minLength={2} value={form.studentName} onChange={(event) => setForm({ ...form, studentName: event.target.value })} />
+        </Field>
+        <Field label={t('sessions.parentRecord')}>
+          <select value={form.parentId} onChange={(event) => {
+            const parent = parents.find((item) => item.id === event.target.value);
+            setForm({ ...form, parentId: event.target.value, parentName: parent?.fullName || form.parentName });
+          }}>
+            <option value="">{t('sessions.manualEntry')}</option>
+            {parents.map((parent) => <option key={parent.id} value={parent.id}>{parent.fullName}{parent.phone ? ` · ${parent.phone}` : ''}</option>)}
+          </select>
         </Field>
         <Field label={t('sessions.parentName')}>
           <input required minLength={2} value={form.parentName} onChange={(event) => setForm({ ...form, parentName: event.target.value })} />

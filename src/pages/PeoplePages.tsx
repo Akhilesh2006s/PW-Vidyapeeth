@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { Field, Modal, Page, TranslatedBadge } from '../components/ui';
-import { messageOf, personName } from '../format';
+import { formatWhen, messageOf, personName } from '../format';
 import { useI18n } from '../language';
-import type { Admission, Parent, Session, SpokenLanguage, Student } from '../types';
+import type { Admission, Parent, ParentAnalysis, Session, SpokenLanguage, Student } from '../types';
 
 const languages: SpokenLanguage[] = ['te', 'en', 'mixed'];
 const relations = ['mother', 'father', 'guardian', 'other'] as const;
@@ -259,7 +259,7 @@ export function ParentsPage() {
             <tbody>
               {parents.map((parent) => (
                 <tr key={parent.id}>
-                  <td>{parent.fullName}</td>
+                  <td><Link to={`/parents/${parent.id}`}>{parent.fullName}</Link></td>
                   <td>{t(`relation.${parent.relation}`)}</td>
                   <td><TranslatedBadge prefix="lang" value={parent.preferredLanguage} /></td>
                   <td>{parent.phone || '—'}</td>
@@ -324,6 +324,50 @@ export function ParentsPage() {
           </form>
         </Modal>
       ) : null}
+    </Page>
+  );
+}
+
+export function ParentDetailPage() {
+  const { id } = useParams();
+  const { t, lang } = useI18n();
+  const [data, setData] = useState<ParentAnalysis | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    api<{ data: ParentAnalysis }>(`/parents/${id}/analysis`)
+      .then((response) => setData(response.data))
+      .catch((err) => setError(messageOf(err)));
+  }, [id]);
+  if (!data && !error) return <Page title={t('common.loading')}><span className="spinner" /></Page>;
+  if (!data) return <Page title={t('parents.analysis')}><div className="banner danger">{error}</div></Page>;
+  return (
+    <Page title={data.parent.fullName} lede={t('parents.analysisLede')} action={<Link className="btn secondary" to="/parents">{t('common.back')}</Link>}>
+      <section className="grid stats">
+        <article className="card stat"><span>{t('parents.totalSessions')}</span><strong>{data.summary.totalSessions}</strong></article>
+        <article className="card stat"><span>{t('parents.counsellorsSeen')}</span><strong>{data.summary.counsellorsSeen}</strong></article>
+        <article className="card stat"><span>{t('parents.satisfaction')}</span><strong>{data.summary.satisfactionScore == null ? '—' : `${data.summary.satisfactionScore}%`}</strong></article>
+        <article className="card stat"><span>{t('parents.bestCounsellor')}</span><strong className="stat-name">{data.summary.bestCounsellor?.counsellorName || '—'}</strong></article>
+      </section>
+      <section className="card"><h2>{t('parents.whyDifferent')}</h2><p className="lede">{data.summary.differenceReason}</p></section>
+      <section className="card table-wrap">
+        <h2>{t('parents.comparison')}</h2>
+        <table>
+          <thead><tr><th>{t('performance.counsellor')}</th><th>{t('analytics.sessions')}</th><th>{t('parents.satisfaction')}</th><th>{t('parents.reasons')}</th></tr></thead>
+          <tbody>{data.counsellorComparison.map((row) => (
+            <tr key={row.counsellorId}><td><strong>{row.counsellorName}</strong></td><td>{row.sessions}</td><td>{row.satisfactionScore == null ? '—' : `${row.satisfactionScore}%`}</td><td>{row.reasons.join(' · ') || '—'}</td></tr>
+          ))}</tbody>
+        </table>
+      </section>
+      <section className="card stack">
+        <h2>{t('parents.history')}</h2>
+        {data.timeline.length ? data.timeline.map((item) => (
+          <article className="history-item" key={item.sessionId}>
+            <div className="row-between"><Link to={`/sessions/${item.sessionId}`}>{item.title}</Link><strong>{item.satisfactionScore == null ? '—' : `${item.satisfactionScore}%`}</strong></div>
+            <div className="muted">{item.counsellorName} · {item.studentName} · {formatWhen(item.startedAt, lang)}</div>
+            {item.summary ? <p>{item.summary}</p> : null}
+          </article>
+        )) : <p className="empty">{t('parents.noHistory')}</p>}
+      </section>
     </Page>
   );
 }

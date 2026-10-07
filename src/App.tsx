@@ -2,8 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth';
 import { AppShell, LoadingBlock } from './components/ui';
 import { LoginPage, RegisterPage } from './pages/AuthPages';
-import { DashboardPage } from './pages/InsightPages';
-import { AdmissionsPage } from './pages/PeoplePages';
+import { CounsellorPerformancePage, DashboardPage } from './pages/InsightPages';
+import { AdmissionsPage, ParentDetailPage, ParentsPage } from './pages/PeoplePages';
 import { NewSessionPage, PointsPage, SessionPage, SessionsPage } from './pages/SessionPages';
 
 function Private() {
@@ -24,6 +24,9 @@ export function App() {
         <Route index element={<DashboardPage />} />
         <Route path="sessions" element={<SessionsPage />} />
         <Route path="admissions" element={<AdmissionsPage />} />
+        <Route path="parents" element={<ParentsPage />} />
+        <Route path="parents/:id" element={<ParentDetailPage />} />
+        <Route path="performance" element={<CounsellorPerformancePage />} />
         <Route path="sessions/new" element={<NewSessionPage />} />
         <Route path="sessions/:id" element={<SessionPage />} />
         <Route path="sessions/:id/:panel" element={<SessionPage />} />

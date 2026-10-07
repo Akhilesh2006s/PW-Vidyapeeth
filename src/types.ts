@@ -32,6 +32,37 @@ export interface Parent {
   students?: Array<Pick<Student, 'id' | 'fullName' | 'grade' | 'preferredLanguage'> | string>;
 }
 
+export interface ParentCounsellorComparison {
+  counsellorId: string;
+  counsellorName: string;
+  sessions: number;
+  satisfactionScore: number | null;
+  reasons: string[];
+}
+
+export interface ParentAnalysis {
+  parent: Parent;
+  summary: {
+    totalSessions: number;
+    counsellorsSeen: number;
+    satisfactionScore: number | null;
+    bestCounsellor: ParentCounsellorComparison | null;
+    differenceReason: string;
+  };
+  counsellorComparison: ParentCounsellorComparison[];
+  timeline: Array<{
+    sessionId: string;
+    title: string;
+    startedAt: string;
+    studentName: string;
+    counsellorId: string;
+    counsellorName: string;
+    satisfactionScore: number | null;
+    reasons: string[];
+    summary: string;
+  }>;
+}
+
 export interface Student {
   id: string;
   fullName: string;
@@ -168,6 +199,32 @@ export interface AnalyticsOverview {
     placeholderAnalyses: number;
     realAnalyses: number;
   };
+}
+
+export interface CounsellorPerformance {
+  scope: 'team' | 'individual';
+  summary: {
+    counsellors: number;
+    totalSessions: number;
+    completedSessions: number;
+    enrollments: number;
+    teamPerformanceScore: number | null;
+  };
+  counsellors: Array<{
+    counsellorId: string;
+    counsellorName: string;
+    employeeCode: string;
+    sessions: number;
+    completedSessions: number;
+    satisfactionScore: number | null;
+    coverageRate: number | null;
+    followUpRate: number | null;
+    conversionRate: number | null;
+    enrollments: number;
+    performanceScore: number | null;
+    strengths: string[];
+    improvements: string[];
+  }>;
 }
 
 export interface CoveragePoint {

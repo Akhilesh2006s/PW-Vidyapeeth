@@ -124,6 +124,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .card h2 { margin: 0 0 0.8rem; font-size: 1.05rem; }
 .stat strong { display: block; font-family: var(--display); font-size: 2rem; margin-top: 0.2rem; }
+.stat strong.stat-name { font-size: 1.25rem; line-height: 1.25; }
 .stat span { color: var(--ink-soft); font-size: 0.86rem; }
 
 .banner {
@@ -187,6 +188,9 @@ textarea { min-height: 96px; resize: vertical; }
 .row-between { display: flex; justify-content: space-between; gap: 0.7rem; align-items: center; }
 .muted { color: var(--ink-soft); }
 .empty { padding: 1.2rem 0.2rem; color: var(--ink-soft); }
+.history-item { padding: 0.8rem 0; border-bottom: 1px solid var(--line); }
+.history-item:last-child { border-bottom: 0; }
+.history-item p { margin: 0.45rem 0 0; }
 
 .pipeline { display: flex; gap: 0.45rem; flex-wrap: wrap; }
 .step {

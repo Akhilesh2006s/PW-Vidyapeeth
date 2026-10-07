@@ -5,7 +5,7 @@ import { Bars, Page, TranslatedBadge } from '../components/ui';
 import { FollowList } from './SessionPages';
 import { formatWhen, messageOf } from '../format';
 import { useI18n } from '../language';
-import type { AnalyticsOverview, CoveragePoint, FollowUp, Student } from '../types';
+import type { AnalyticsOverview, CounsellorPerformance, CoveragePoint, FollowUp, Student } from '../types';
 import { useAuth } from '../auth';
 
 export function DashboardPage() {
@@ -174,6 +174,59 @@ export function AnalyticsPage() {
           <div className="row-between"><span>{t('analytics.placeholderCount')}</span><strong>{data?.ai.placeholderAnalyses ?? 0}</strong></div>
           <div className={`banner ${data?.ai.configured ? 'ok' : ''}`}>{data?.ai.configured ? t('dashboard.aiOn') : t('dashboard.aiOff')}</div>
         </article>
+      </section>
+    </Page>
+  );
+}
+
+export function CounsellorPerformancePage() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const [data, setData] = useState<CounsellorPerformance | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    api<{ data: CounsellorPerformance }>('/analytics/counsellors')
+      .then((response) => setData(response.data))
+      .catch((err) => setError(messageOf(err)));
+  }, []);
+  const pct = (value: number | null) => value == null ? '—' : `${value}%`;
+  const individual = data?.counsellors[0];
+  const teamView = user?.role === 'admin' && data?.scope === 'team';
+  return (
+    <Page title={teamView ? t('performance.title') : t('performance.myTitle')} lede={teamView ? t('performance.lede') : t('performance.myLede')}>
+      {error ? <div className="banner danger">{error}</div> : null}
+      <section className="grid stats">
+        <article className="card stat"><span>{teamView ? t('performance.teamScore') : t('performance.score')}</span><strong>{pct(teamView ? data?.summary.teamPerformanceScore ?? null : individual?.performanceScore ?? null)}</strong></article>
+        {teamView ? <article className="card stat"><span>{t('performance.counsellors')}</span><strong>{data?.summary.counsellors ?? '—'}</strong></article> : <article className="card stat"><span>{t('parents.satisfaction')}</span><strong>{pct(individual?.satisfactionScore ?? null)}</strong></article>}
+        <article className="card stat"><span>{t('analytics.sessions')}</span><strong>{teamView ? data?.summary.totalSessions ?? '—' : individual?.sessions ?? '—'}</strong></article>
+        <article className="card stat"><span>{t('performance.enrollments')}</span><strong>{teamView ? data?.summary.enrollments ?? '—' : individual?.enrollments ?? '—'}</strong></article>
+      </section>
+      {teamView ? <section className="card table-wrap">
+        <table>
+          <thead><tr><th>{t('performance.counsellor')}</th><th>{t('performance.score')}</th><th>{t('parents.satisfaction')}</th><th>{t('performance.coverage')}</th><th>{t('performance.followUp')}</th><th>{t('performance.conversion')}</th><th>{t('analytics.sessions')}</th></tr></thead>
+          <tbody>{data?.counsellors.map((row) => (
+            <tr key={row.counsellorId}>
+              <td><strong>{row.counsellorName}</strong><div className="muted">{row.employeeCode}</div></td>
+              <td><strong>{pct(row.performanceScore)}</strong></td><td>{pct(row.satisfactionScore)}</td><td>{pct(row.coverageRate)}</td><td>{pct(row.followUpRate)}</td><td>{pct(row.conversionRate)}</td><td>{row.sessions}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </section> : individual ? (
+        <section className="grid stats">
+          <article className="card stat"><span>{t('performance.coverage')}</span><strong>{pct(individual.coverageRate)}</strong></article>
+          <article className="card stat"><span>{t('performance.followUp')}</span><strong>{pct(individual.followUpRate)}</strong></article>
+          <article className="card stat"><span>{t('performance.conversion')}</span><strong>{pct(individual.conversionRate)}</strong></article>
+          <article className="card stat"><span>{t('analytics.completed')}</span><strong>{individual.completedSessions}</strong></article>
+        </section>
+      ) : null}
+      <section className="grid cards-2">
+        {(teamView ? data?.counsellors : individual ? [individual] : []).map((row) => (
+          <article className="card" key={`${row.counsellorId}-detail`}>
+            <div className="row-between"><h2>{row.counsellorName}</h2><span className="badge ok">{pct(row.performanceScore)}</span></div>
+            <h3>{t('performance.strengths')}</h3><ul className="list">{row.strengths.length ? row.strengths.map((item) => <li key={item}>{item}</li>) : <li>{t('common.none')}</li>}</ul>
+            <h3>{t('performance.improvements')}</h3><ul className="list">{row.improvements.length ? row.improvements.map((item) => <li key={item}>{item}</li>) : <li>{t('common.none')}</li>}</ul>
+          </article>
+        ))}
       </section>
     </Page>
   );

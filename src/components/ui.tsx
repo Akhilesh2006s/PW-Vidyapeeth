@@ -40,7 +40,9 @@ export function TranslatedBadge({ value, prefix }: { value: string; prefix: 'sta
 const links: Array<{ to: string; key: MessageKey; end?: boolean; admin?: boolean }> = [
   { to: '/', key: 'nav.dashboard', end: true },
   { to: '/sessions', key: 'nav.sessions' },
+  { to: '/parents', key: 'nav.parents' },
   { to: '/admissions', key: 'nav.admissions' },
+  { to: '/performance', key: 'nav.performance' },
   { to: '/points', key: 'nav.points', admin: true },
 ];
 

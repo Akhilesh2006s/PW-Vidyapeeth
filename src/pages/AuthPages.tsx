@@ -43,9 +43,7 @@ export function LoginPage() {
         <button type="submit" disabled={pending}>
           {pending ? t('common.loading') : t('auth.signIn')}
         </button>
-        <p>
-          {t('auth.noAccount')} <Link className="linkish" to="/register">{t('auth.signUp')}</Link>
-        </p>
+        <p className="muted">{t('auth.adminCreates')}</p>
         <LanguageRow lang={lang} setLang={setLang} />
       </form>
     </AuthFrame>

@@ -108,6 +108,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   padding: 1rem 1.6rem; border-bottom: 1px solid var(--line); background: rgba(255, 253, 248, 0.8);
   position: sticky; top: 0; z-index: 2; backdrop-filter: blur(10px);
 }
+.password-reminder {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  background: #f8f1df;
+  border-bottom: 1px solid #ead7a4;
+  color: #5c4816;
+  font-weight: 600;
+}
+.password-reminder a { color: var(--accent-strong); }
 .who { display: flex; flex-direction: column; }
 .who strong { font-size: 0.95rem; }
 .who span { color: var(--ink-soft); font-size: 0.8rem; }

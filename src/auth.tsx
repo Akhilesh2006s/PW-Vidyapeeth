@@ -8,6 +8,7 @@ interface AuthValue {
   ready: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (body: { name: string; email: string; password: string; phone?: string; preferredLanguage: 'en' | 'te' }) => Promise<void>;
+  refresh: () => Promise<void>;
   logout: () => void;
 }
 
@@ -48,6 +49,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async register(body) {
         const response = await authApi.register(body);
         localStorage.setItem(TOKEN_KEY, response.data.token);
+        setUser(response.data.user);
+        setCounsellor(response.data.counsellor);
+      },
+      async refresh() {
+        const response = await authApi.me();
         setUser(response.data.user);
         setCounsellor(response.data.counsellor);
       },

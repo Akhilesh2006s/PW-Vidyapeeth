@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { useI18n } from '../language';
 import type { MessageKey } from '../i18n';
@@ -44,6 +44,7 @@ const links: Array<{ to: string; key: MessageKey; end?: boolean; admin?: boolean
   { to: '/admissions', key: 'nav.admissions' },
   { to: '/performance', key: 'nav.performance' },
   { to: '/points', key: 'nav.points', admin: true },
+  { to: '/settings', key: 'nav.settings' },
 ];
 
 export function AppShell() {
@@ -94,6 +95,12 @@ export function AppShell() {
             </button>
           </div>
         </header>
+        {user?.mustChangePassword ? (
+          <div className="password-reminder">
+            <span>{t('settings.passwordReminder')}</span>
+            <Link to="/settings">{t('settings.changeNow')}</Link>
+          </div>
+        ) : null}
         <Outlet />
       </div>
     </div>

@@ -11,13 +11,21 @@ export interface User {
   role: 'admin' | 'counsellor';
   phone: string;
   preferredLanguage: UiLanguage;
+  mustChangePassword: boolean;
 }
 
 export interface Counsellor {
   id: string;
   employeeCode: string;
+  jobTitle: string;
   languages: Array<'en' | 'te'>;
   specializations: string[];
+  active: boolean;
+}
+
+export interface StaffAccount extends User {
+  employeeCode: string;
+  jobTitle: string;
   active: boolean;
 }
 

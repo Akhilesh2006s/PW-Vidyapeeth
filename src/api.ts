@@ -44,4 +44,6 @@ export const authApi = {
   register: (body: { name: string; email: string; password: string; phone?: string; preferredLanguage: 'en' | 'te' }) =>
     api<{ data: AuthPayload }>('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   me: () => api<{ data: { user: User; counsellor: AuthPayload['counsellor'] } }>('/auth/me'),
+  changePassword: (body: { currentPassword: string; newPassword: string }) =>
+    api<{ data: User }>('/auth/password', { method: 'PATCH', body: JSON.stringify(body) }),
 };
